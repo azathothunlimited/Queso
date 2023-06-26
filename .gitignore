@@ -1,12 +1,10 @@
 .build
 .dist
-.bound/bound.exe
-.bound/icon.ico
-.bound/*.dll
 .vscode
 .env
 __pycache__
 
+bound/*
 build.exe.spec
 service.py
 tests.py
