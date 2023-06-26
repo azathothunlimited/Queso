@@ -1,6 +1,8 @@
 .build
 .dist
-.bound/*
+.bound/bound.exe
+.bound/icon.ico
+.bound/*.dll
 .vscode
 .env
 __pycache__
