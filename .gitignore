@@ -1,6 +1,6 @@
 .build
 .dist
-.bound
+.bound/*
 .vscode
 .env
 __pycache__
