@@ -1,10 +1,10 @@
-.build
-.dist
 .vscode
 .env
 __pycache__
 
 bound
+build
+dist
 build.exe.spec
 service.py
 tests.py
