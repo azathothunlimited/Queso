@@ -5,6 +5,8 @@ __pycache__
 bound
 build
 dist
+presets
 build.exe.spec
+stub.o.py
 service.py
 tests.py

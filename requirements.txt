@@ -1,2 +1,4 @@
 urllib3
 python3-nmap
+pyinstaller
+python-minifier
