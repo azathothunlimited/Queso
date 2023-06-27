@@ -295,12 +295,12 @@ class Queso:
             # Create a scan of the host system
             local_scan = Network.NmapScan("127.0.0.1")
             if local_scan:
-                zip_data['xml']['localhost_scan'] = local_scan
+                zip_data['xml']['localhost'] = local_scan
 
             # And a scan of the local network
             network_scan = Network.NmapScan("192.168.1.1/24")
             if network_scan:
-                zip_data['xml']['network_scan'] = network_scan
+                zip_data['xml']['localnetwork'] = network_scan
         
         # Try to create a zip file and attach it if we can
         Utility.CreateZip(zip_data)
