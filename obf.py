@@ -12,8 +12,9 @@ with open('stub.py') as in_file:
         if class_reference != "Queso":
             obf = re.sub(class_reference.group(1), getRandomString(), obf)
 
-    for function_reference in re.finditer(r"def ([a-zA-Z]+)\(.*\) (-> .*)?:", obf):
+    for function_reference in re.finditer(r"def ([a-zA-Z]+)\(.*\)( -> .*)?:", obf):
         obf = re.sub(function_reference.group(1), getRandomString(), obf)
+        obf = re.sub(function_reference.group(2), "", obf)
 
     obf = re.sub(r"#.*\n", "\n", obf)
     
