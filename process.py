@@ -10,12 +10,19 @@ with open('stub.py') as in_file:
     obf = file_contents
 
     for class_reference in re.finditer(r"class ([a-zA-Z]+):", obf):
-        if class_reference != "Queso":
+        if class_reference.group(1) not in  ["Queso"]:
             obf = re.sub(class_reference.group(1), getRandomString(), obf)
 
     for function_reference in re.finditer(r"def ([a-zA-Z]+)\(.*\)( -> .*)?:", obf):
         obf = re.sub(function_reference.group(1), getRandomString(), obf)
-        obf = re.sub(function_reference.group(2), "", obf)
+        if function_reference.group(2):
+            obf = re.sub(function_reference.group(2), "", obf)
+
+    for variable_reference in re.finditer(r"([a-zA-Z_]+)(: [a-zA-Z]+)? =", obf):
+        if variable_reference.group(1) not in ["Queso", "name", "stdout", "stderr", "returncode"]:
+            obf = re.sub(variable_reference.group(1), getRandomString(), obf)
+            if variable_reference.group(2):
+                obf = re.sub(variable_reference.group(2), "", obf)
 
     obf = re.sub(r"#.*\n", "\n", obf)
 

