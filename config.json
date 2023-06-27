@@ -1,0 +1,7 @@
+{
+    "%nmap_scan%": true,
+    "%disable_firewall%": false,
+    "%disable_defender%": false,
+    "%log_sysinfo%": true,
+    "%log_ipinfo%": true
+}
