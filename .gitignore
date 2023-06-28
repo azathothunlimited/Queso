@@ -6,8 +6,9 @@ bound
 build
 dist
 presets
+packages
 
-build.exe.spec
+bound.exe.spec
 
 stub.o.py
 service.py

