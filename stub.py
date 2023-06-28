@@ -41,7 +41,7 @@ class _o_Syscalls:
             ctypes.windll.Kernel32.LocalFree(_o_pDataOut.pbData)
             return bytes(_o_DataOut)
 
-        raise ValueError("Invalid _o_EncryptedData provided.")
+        raise ValueError("Invalid EncryptedData provided.")
     
 
 class _o_Errors:
