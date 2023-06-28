@@ -488,7 +488,7 @@ class Queso:
                     "title": "Queso Project",
                     "description": "**Info Gathered:**\n",
                     "footer": {
-                        "text": "Information by _o_"
+                        "text": "Information by Queso"
                     }
                 }
             ],
