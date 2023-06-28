@@ -2,5 +2,5 @@ urllib3
 python3-nmap
 pyinstaller
 tinyaes
-pyaes
+pycryptodome
 pillow
