@@ -5,7 +5,7 @@
 
 ## Description
 
-Queso is an information gathering tool inspired by [Blank-Grabber](https://github.com/Blank-c/Blank-Grabber). It is designed to disguise itself inside an executable file and collect data on a target's machine. Collected data is sent to a Discord webhook.
+Queso is an information-centered tool inspired by [Blank-Grabber](https://github.com/Blank-c/Blank-Grabber). It is designed to disguise itself inside an executable file so it can collect data on a target's machine and local network. Collected data is sent to a Discord webhook.
 
 ## Usage
 
